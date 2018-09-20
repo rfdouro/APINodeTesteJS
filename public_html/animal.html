@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+ <head>
+  <title>TODO supply a title</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="js/libs/jquery/jquery.js" type="text/javascript"></script>
+  <script src="js/libs/vue/vue.js" type="text/javascript"></script>
+ </head>
+ <body>
+  <a href="pessoa.html">Abre Cadastro de Pessoas</a>
+  <div id="app">
+   <h1>Cadastro de Animais</h1>
+   <form>
+    <fieldset>
+     <legend>Dados</legend>
+     <input type="hidden" v-model="animal.id"/>
+     <label>Nome:</label><input type="text" v-model="animal.nome">
+     <label>Proprietário:</label>
+     <select v-model.lazy="animal.pessoaId">
+      <option v-for="p in pessoas" v-bind:value="p.id">{{p.nome}}</option>
+     </select>
+     <button v-on:click.prevent="salva()">Salvar</button>
+    </fieldset>
+   </form>
+   <table>
+    <thead>
+     <tr>
+      <th>ID</th>
+      <th>Nome</th>
+      <th>Alterar</th>
+      <th>Excluir</th>
+     </tr>
+    </thead>
+    <tbody>
+     <tr v-for="p in animais">
+      <td>{{p.id}}</td>
+      <td>{{p.nome}}</td>
+      <td><button v-on:click.stop="abreAltera(p.id)">O</button></td>
+      <td><button v-on:click.stop="exclui(p.id)">X</button></td>
+     </tr>
+    </tbody>
+   </table>
+  </div>
+  <script>
+   var apiV = new Vue({
+    el: "#app",
+    data: {
+     animal: {
+      id: -1,
+      nome: '',
+      pessoaId: -1
+     },
+     animais: [],
+     pessoas: []
+    },
+    methods: {
+     listaPessoas: function () {
+      $.get("http://localhost:3000/pessoa", function (data, status) {
+       apiV.pessoas = data;
+      });
+     },
+     listaAnimais: function () {
+      $.get("http://localhost:3000/animal", function (data, status) {
+       apiV.animais = data;
+       apiV.listaPessoas();
+      });
+     },
+     abreAltera: function (id) {
+      $.get("http://localhost:3000/animal/" + id, function (data, status) {
+       apiV.animal = data;
+      });
+     },
+     salva: function () {
+      if (this.animal.id < 0) {
+       $.ajax({
+        url: 'http://localhost:3000/animal',
+        type: 'POST',
+        data: this.animal,
+        complete: function () {
+         apiV.listaAnimais();
+         apiV.animal = {
+          id: -1,
+          nome: '',
+          idade: 0
+         };
+        },
+        success: function (data) {
+         alert(data.mensagem);
+        }
+       });
+      } else {
+       $.ajax({
+        url: 'http://localhost:3000/animal',
+        type: 'PUT',
+        data: this.animal,
+        complete: function () {
+         apiV.listaAnimais();
+         apiV.animal = {
+          id: -1,
+          nome: '',
+          idade: 0
+         };
+        },
+        success: function (data) {
+         alert(data.mensagem);
+        }
+       });
+      }
+     },
+     exclui: function (id) {
+      $.ajax({
+       url: 'http://localhost:3000/animal/' + id,
+       type: 'DELETE',
+       success: function (data) {
+        alert(data.mensagem);
+        apiV.listaAnimais();
+       }
+      });
+     }
+    }
+   });
+
+   apiV.listaAnimais();
+  </script>
+ </body>
+</html>
+
